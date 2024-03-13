@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import "../SCSS/Home.scss";
-
+import { context_music } from "../App";
 
 export default function Home() {
+    const { isAuthenticated, setIsAuthenticated, albums, setAlbums } = useContext(context_music);
     const [artistPlaylists, setArtistPlaylists] = useState([]);
-    const [albums, setAlbums] = useState([]);
     const [specialSongs, setSpecalSongs] = useState([]);
 
 
@@ -14,13 +14,16 @@ export default function Home() {
             "method": "GET",
             "headers": {
                 "content-type": "application/json"
-            }
+            },
+            withCredentials: true,
+            credentials: 'include'
         })
             .then(data => data.json())
             .then((result) => {
                 setArtistPlaylists(result.artistPlaylists);
                 setAlbums(result.albums);
                 setSpecalSongs(result.specialSongs);
+                setIsAuthenticated(result.isAuthenticated);
             })
             .catch((err) => {
                 console.log(err);
@@ -84,16 +87,24 @@ export default function Home() {
                         />
                     </div>
                 </div>
-                <Link to={"/Login"} className="profile">
-                    <i
-                        className="fa-solid fa-user"
-                        style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
-                    ></i>
-                    {/* <i
-                        className="fa-solid fa-right-from-bracket"
-                        style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
-                    ></i> */}
-                </Link>
+                {
+                    isAuthenticated
+                        ?
+                        <div className="profile">
+                            <i
+                                className="fa-solid fa-right-from-bracket"
+                                style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
+                            ></i>
+                        </div>
+                        :
+                        <Link to={"/Login"} className="profile">
+                            <i
+                                className="fa-solid fa-user"
+                                style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
+                            ></i>
+                        </Link>
+                }
+
             </nav>
             <div id="popularArtists">
                 <div id="popular">Popular Artists</div>
@@ -105,7 +116,7 @@ export default function Home() {
                         ></i>
                     </div>
                     <div id="artists">
-                        {artistPlaylists.map((element) => {
+                        {artistPlaylists.map((element,index) => {
                             return (
                                 // <Link to={`/artist/:${element.Id}`} style={{textDecoration:"none"}}>
                                 //   <div style={{ cursor: "pointer" }}>
@@ -113,12 +124,12 @@ export default function Home() {
                                 //     <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
                                 //   </div>
                                 // </Link>
-                                <div style={{ textDecoration: "none" }}>
+                                <Link to={`/artist/${element.playlist_name}`} style={{ textDecoration: "none" }} key={index}>
                                     <div style={{ cursor: "pointer" }}>
                                         <img src={element.playlist_image} alt={element.playlist_name} id="artist" />
                                         <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
                                     </div>
-                                </div>
+                                </Link>
                             );
                         })}
                     </div>
@@ -141,7 +152,7 @@ export default function Home() {
                         ></i>
                     </div>
                     <div id="trendingSongs">
-                        {specialSongs.map((element) => {
+                        {specialSongs.map((element,index) => {
                             return (
                                 // <Link to={`/artist/:${element.Id}`} style={{textDecoration:"none"}}>
                                 //   <div style={{ cursor: "pointer" }}>
@@ -149,7 +160,7 @@ export default function Home() {
                                 //     <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
                                 //   </div>
                                 // </Link>
-                                <div style={{ textDecoration: "none" }}>
+                                <div style={{ textDecoration: "none" }} key={index}>
                                     <div style={{ cursor: "pointer" }}>
                                         <img src={element.song_imagepath} alt={element.song_name} id="trending" />
                                         <p style={{ paddingTop: "5px" }}>{element.song_name}</p>
@@ -170,12 +181,12 @@ export default function Home() {
             <div id="albums">
                 <div id="popular">Popular Playlists</div>
                 <div id="album_playlists">
-                    {albums.map((element) => {
+                    {albums.map((element,index) => {
                         return (
-                            <div style={{ textDecoration: "none", cursor: "pointer" }} id="album_playlist">
+                            <Link to={`/artist/${element.playlist_name}`} style={{ textDecoration: "none", cursor: "pointer" }} id="album_playlist" key={index}>
                                 <img src={element.playlist_image} alt={element.playlist_name} id="playlist_image" />
                                 <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>

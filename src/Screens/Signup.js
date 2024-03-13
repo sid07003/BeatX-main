@@ -7,11 +7,12 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [error, setError] = useState('');
+  const [isNotification, setIsNotification] = useState(false);
+  const [notification, setNotification] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [showPassword1, setShowPassword1] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
 
-  function showError(){
-
-  }
 
   const handleSignup = (e) => {
     e.preventDefault();
@@ -22,6 +23,10 @@ export default function Signup() {
       "confirmPassword": confirmPassword
     }
 
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+
     fetch("http://localhost:3001/signup", {
       method: "POST",
       headers: {
@@ -31,8 +36,12 @@ export default function Signup() {
     })
       .then(response => {
         if (response.status === 400) {
-          setError("Passwords don't match");
-          showError();
+          setNotification("Passwords don't match");
+          setIsError(true);
+          setIsNotification(true);
+          setTimeout(() => {
+            setIsNotification(false);
+          }, 2000);
         }
         else if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -40,7 +49,12 @@ export default function Signup() {
         return response.json();
       })
       .then(result => {
-        console.log("signup successfully")
+        setNotification("Account created successfully");
+        setIsError(false);
+        setIsNotification(true);
+        setTimeout(() => {
+          setIsNotification(false);
+        }, 2000);
       })
       .catch(error => {
         console.error('There was a problem with the fetch operation:', error);
@@ -61,27 +75,32 @@ export default function Signup() {
               required
             />
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ position: "relative" }}>
             <input
-              type="password"
+              type={showPassword1 ? "text" : "password"}
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <i className={`fa-regular ${showPassword1 ? "fa-eye" : "fa-eye-slash"}`} id="showPassword" onClick={() => setShowPassword1(!showPassword1)}></i>
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ position: "relative" }}>
             <input
-              type="password"
+              type={showPassword2 ? "text" : "password"}
               placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
+            <i className={`fa-regular ${showPassword2 ? "fa-eye" : "fa-eye-slash"}`} id="showPassword" onClick={() => setShowPassword2(!showPassword2)}></i>
           </div>
           <button type="submit">Sign Up</button>
           <Link to={"/Login"} id="create_new_account" type="submit">Back To Login</Link>
         </form>
+      </div>
+      <div id="notification" className={isNotification ? (isError ? "error" : "success") : "noError"}>
+        {notification}
       </div>
     </div>
   );
