@@ -141,7 +141,7 @@ app.get("/getBeatxData", (req, res) => {
     }
 });
 
-function fetchBeatxData(isAuthenticated, res, userData = {}, lastPlayedMusic={}) {
+function fetchBeatxData(isAuthenticated, res, userData = {}, lastPlayedMusic = {}) {
     dbinstance.collection("beatx_playlists_data").find().toArray()
         .then((data) => {
             const artistPlaylists = data[0].playlist;
@@ -225,9 +225,63 @@ app.post("/setCurrentlyPlayingMusic", verifyToken, (req, res) => {
         });
 });
 
+// ---------------------------------------------- Next Song --------------------------------------------
 
+app.post("/nextSong", (req, res) => {
+    const song = req.body.song;
+    let nextIndex = song.index + 1;
+    dbinstance.collection("songs_data").findOne({ index: nextIndex })
+        .then((data) => {
+            if (!data) {
+                dbinstance.collection("songs_data").findOne({ index: 0 })
+                    .then((result) => {
+                        res.status(200).json({ nextSong: result });
+                    })
+                    .catch((err) => {
+                        res.status(500).json({ error: "Internal Server Error" });
+                    })
+            }
+            else {
+                res.status(200).json({ nextSong: data });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ error: "Internal Server Error" });
+        })
+})
 
+// ------------------------------------------------- prevous song -----------------------------
 
+app.post("/prevSong", (req, res) => {
+    const song = req.body.song;
+    let prevIndex = song.index - 1;
+    dbinstance.collection("songs_data").findOne({ index: prevIndex })
+        .then((data) => {
+            if (!data) {
+                dbinstance.collection("songs_data").find({}).toArray()
+                    .then((response) => {
+                        dbinstance.collection("songs_data").findOne({ index: response.length - 1 })
+                            .then((result) => {
+                                res.status(200).json({ prevSong: result });
+                            })
+                            .catch((err) => {
+                                res.status(500).json({ error: "Internal Server Error" });
+                            })
+                    })
+                    .catch((err) => {
+                        res.status(500).json({ error: "Internal Server Error" });
+                    })
+            }
+            else {
+                res.status(200).json({ prevSong: data });
+            }
+        })
+        .catch((err) => {
+            res.status(500).json({ error: "Internal Server Error" });
+        })
+})
+
+// --------------------------------------------------------------------------------------------------
 
 app.listen(3001, (err) => {
     if (err) {

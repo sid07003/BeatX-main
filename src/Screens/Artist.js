@@ -3,12 +3,12 @@ import { useParams } from "react-router-dom";
 import "../SCSS/Artist.scss";
 import { context_music } from "../App.js";
 
-export default function Artist(props) {
+export default function Artist() {
     const { artistData } = useParams();
     const [songsData, setSongsData] = useState([]);
     const [playlistData, setPlaylistData] = useState({});
     const { isAuthenticated, likedSongs, setLikedSongs, set_currently_playing_music, musicPlayer,
-    setIsMusicClicked } = useContext(context_music);
+    setIsMusicClicked, setmusicPlayer } = useContext(context_music);
 
     useEffect(() => {
         fetch("http://localhost:3001/getArtistData", {
@@ -64,6 +64,7 @@ export default function Artist(props) {
             .then((result) => {
                 set_currently_playing_music(element);
                 setIsMusicClicked(true);
+                setmusicPlayer(true);
             })
             .catch((err) => {
                 console.log(err);

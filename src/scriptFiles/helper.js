@@ -96,7 +96,8 @@ app.get("/", (req, res) => {
         }
         else{
             const songs=JSON.parse(data);
-            songs.forEach(song => {
+            songs.forEach((song,index) => {
+                song.index=index;
                 dbinstance.collection("songs_data").insertOne(song)
                     .then(result => {
                         console.log(`Inserted song with _id: ${result.insertedId}`);
@@ -133,7 +134,7 @@ app.get("/", (req, res) => {
 })
 
 
-app.listen(3000, (err) => {
+app.listen(3002, (err) => {
     if (err) {
         console.log(err);
     }
