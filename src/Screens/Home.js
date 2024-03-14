@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "../SCSS/Home.scss";
 import { context_music } from "../App";
 
 export default function Home() {
-    const { isAuthenticated, setIsAuthenticated, albums, setAlbums } = useContext(context_music);
+    const Navigate = useNavigate();
+    const { isAuthenticated, setIsAuthenticated, albums, setAlbums, setLikedSongs } = useContext(context_music);
     const [artistPlaylists, setArtistPlaylists] = useState([]);
     const [specialSongs, setSpecalSongs] = useState([]);
 
@@ -24,6 +25,7 @@ export default function Home() {
                 setAlbums(result.albums);
                 setSpecalSongs(result.specialSongs);
                 setIsAuthenticated(result.isAuthenticated);
+                setLikedSongs(result.likedSongs)
             })
             .catch((err) => {
                 console.log(err);
@@ -50,6 +52,21 @@ export default function Home() {
         let element = document.querySelector("#trendingSongs");
         element.scrollLeft -= element.offsetWidth;
     };
+
+    const logout = () => {
+        fetch("http://localhost:3001/logout", {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                Navigate("/login");
+            })
+    }
 
     return (
         <div id="home">
@@ -94,6 +111,7 @@ export default function Home() {
                             <i
                                 className="fa-solid fa-right-from-bracket"
                                 style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
+                                onClick={logout}
                             ></i>
                         </div>
                         :
@@ -116,14 +134,8 @@ export default function Home() {
                         ></i>
                     </div>
                     <div id="artists">
-                        {artistPlaylists.map((element,index) => {
+                        {artistPlaylists.map((element, index) => {
                             return (
-                                // <Link to={`/artist/:${element.Id}`} style={{textDecoration:"none"}}>
-                                //   <div style={{ cursor: "pointer" }}>
-                                //     <img src={element.playlist_image} alt={element.playlist_name} id="artist" />
-                                //     <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
-                                //   </div>
-                                // </Link>
                                 <Link to={`/artist/${element.playlist_name}`} style={{ textDecoration: "none" }} key={index}>
                                     <div style={{ cursor: "pointer" }}>
                                         <img src={element.playlist_image} alt={element.playlist_name} id="artist" />
@@ -152,7 +164,7 @@ export default function Home() {
                         ></i>
                     </div>
                     <div id="trendingSongs">
-                        {specialSongs.map((element,index) => {
+                        {specialSongs.map((element, index) => {
                             return (
                                 // <Link to={`/artist/:${element.Id}`} style={{textDecoration:"none"}}>
                                 //   <div style={{ cursor: "pointer" }}>
@@ -181,7 +193,7 @@ export default function Home() {
             <div id="albums">
                 <div id="popular">Popular Playlists</div>
                 <div id="album_playlists">
-                    {albums.map((element,index) => {
+                    {albums.map((element, index) => {
                         return (
                             <Link to={`/artist/${element.playlist_name}`} style={{ textDecoration: "none", cursor: "pointer" }} id="album_playlist" key={index}>
                                 <img src={element.playlist_image} alt={element.playlist_name} id="playlist_image" />

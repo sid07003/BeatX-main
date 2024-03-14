@@ -6,7 +6,8 @@ import { context_music } from "../App.js";
 export default function Artist(props) {
     const { artistData } = useParams();
     const [songsData, setSongsData] = useState([]);
-    const [playlistData,setPlaylistData]=useState({});
+    const [playlistData, setPlaylistData] = useState({});
+    const { isAuthenticated, likedSongs, setLikedSongs } = useContext(context_music);
 
     useEffect(() => {
         fetch("http://localhost:3001/getArtistData", {
@@ -27,6 +28,26 @@ export default function Artist(props) {
                 console.log(err);
             })
     }, [])
+
+    const toggleLike = (songId) => {
+        fetch("http://localhost:3001/addLikeSong", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "songId": songId }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                console.log("Successfully added to liked Songs")
+                setLikedSongs([...likedSongs, songId]);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
 
     return (
         <div id="Artist"
@@ -94,7 +115,17 @@ export default function Artist(props) {
 
                                 <div id="body_duration">{element.song_duration}</div>
                                 <div id="title_likes">
-                                    <i className="fa-regular fa-heart" style={{ color: "#ffffff" }}></i>
+                                    {
+                                        likedSongs.includes(element._id)
+                                            ?
+                                            <i className="fa-solid fa-heart" style={{ color: "#ffffff" }} onClick={() => {
+                                                toggleLike(element._id);
+                                            }}></i>
+                                            :
+                                            <i className="fa-regular fa-heart" style={{ color: "#ffffff" }} onClick={() => {
+                                                toggleLike(element._id);
+                                            }}></i>
+                                    }
                                 </div>
                             </div>
                         );

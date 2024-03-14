@@ -18,7 +18,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 MongoClient.connect("mongodb+srv://SiddharthSharma:siddharth@cluster0.gacgrpw.mongodb.net/")
     .then((client) => {
         dbinstance = client.db("beatx");
@@ -29,37 +29,27 @@ MongoClient.connect("mongodb+srv://SiddharthSharma:siddharth@cluster0.gacgrpw.mo
     });
 
 
-app.get("/getBeatxData", (req, res) => {
-    let isAuthenticated;
+// --------------------------------- Token Verification middleware --------------------------------------
+
+const verifyToken = (req, res, next) => {
     const token = req.cookies.access_token;
 
     if (!token) {
-        isAuthenticated = false;
-    }
-    else {
-        isAuthenticated = true;
+        console.log("unauthorized")
+        return res.status(401).json({ error: "Unauthorized" });
     }
 
-    dbinstance.collection("beatx_playlists_data").find().toArray()
-        .then((data) => {
-            const artistPlaylists = data[0].playlist;
-            const albums = data[1].playlist;
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        req.userId = new ObjectId(decoded.id);
+        next();
+    });
+};
 
-            dbinstance.collection("songs_data").find({ playlist: "Special" }).toArray()
-                .then((specialSongs) => {
-                    res.status(200).json({ "artistPlaylists": artistPlaylists, "albums": albums, "specialSongs": specialSongs, "isAuthenticated": isAuthenticated });
-                })
-                .catch((err) => {
-                    console.log("Error fetching special songs:", err);
-                    res.status(500).json({ error: "An error occurred while fetching special songs" });
-                });
-        })
-        .catch((err) => {
-            console.log(err);
-            res.status(500).json({ error: "An error occurred while fetching data" });
-        });
-});
 
+// ---------------------------------- Authentication End Points ------------------------------------------
 app.post("/login", async (req, res) => {
     try {
         const loginData = req.body;
@@ -76,15 +66,13 @@ app.post("/login", async (req, res) => {
                 return res.status(400).json({ error: "Invalid credentials" });
             }
 
-            const accessToken = jwt.sign({ id: result._id, email: result.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const accessToken = jwt.sign({ id: result._id, email: result.email }, process.env.JWT_SECRET, { expiresIn: 24*60*60*1000 });
 
             res.cookie("access_token", accessToken, {
                 maxAge: 24 * 60 * 60 * 1000,
                 httpOnly: true,
                 path: "/"
             });
-            // console.log(accessToken)
-            console.log("reached")
             res.status(200).json({ success: true });
         });
     } catch (error) {
@@ -93,23 +81,9 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.post("/getArtistData", (req, res) => {
-    dbinstance.collection("beatx_playlists_data").findOne({ "playlist.playlist_name": req.body.playlistName }, { "playlist.$": 1 })
-        .then((data) => {
-            const reqData = data.playlist.find(playlist => playlist.playlist_name === req.body.playlistName);
-            dbinstance.collection("songs_data").find({ playlist: req.body.playlistName }).toArray()
-                .then((result) => {
-                    res.status(200).json({ songs: result, playlistData: reqData });
-                })
-                .catch((err) => {
-                    console.log(err);
-                    res.status(500).json({ error: "Internal Server Error" });
-                })
-        })
-        .catch((err) => {
-            console.log(err);
-            res.status(500).json({ error: "Internal Server Error" });
-        })
+app.get("/logout", (req, res) => {
+    res.clearCookie("access_token", { path: "/" });
+    res.status(200).json({ success: true, message: "Logged out successfully" });
 })
 
 app.post("/signup", (req, res) => {
@@ -139,6 +113,100 @@ app.post("/signup", (req, res) => {
         })
     }
 })
+
+// ------------------------------------------ retrieve beatx data -------------------------------------
+app.get("/getBeatxData", (req, res) => {
+    const token = req.cookies.access_token;
+
+    let isAuthenticated = false;
+    if (token) {
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (!err) {
+                isAuthenticated = true;
+                const userId = new ObjectId(decoded.id);
+                dbinstance.collection("user_data").findOne({ _id: userId })
+                    .then((result) => {
+                        fetchBeatxData(isAuthenticated, res, result);
+                    })
+                    .catch((err) => {
+                        res.status(500).json({ error: "An error occurred while fetching data" });
+                    });
+            } else {
+                console.log(err);
+                fetchBeatxData(isAuthenticated, res);
+            }
+        });
+    } else {
+        fetchBeatxData(isAuthenticated, res);
+    }
+});
+
+function fetchBeatxData(isAuthenticated, res, userData = {}) {
+    dbinstance.collection("beatx_playlists_data").find().toArray()
+        .then((data) => {
+            const artistPlaylists = data[0].playlist;
+            const albums = data[1].playlist;
+
+            dbinstance.collection("songs_data").find({ playlist: "Special" }).toArray()
+                .then((specialSongs) => {
+                    res.status(200).json({
+                        artistPlaylists: artistPlaylists,
+                        albums: albums,
+                        specialSongs: specialSongs,
+                        isAuthenticated: isAuthenticated,
+                        likedSongs: isAuthenticated ? userData.likedSongs || {} : {}
+                    });
+                })
+                .catch((err) => {
+                    console.log("Error fetching special songs:", err);
+                    res.status(500).json({ error: "An error occurred while fetching special songs" });
+                });
+        })
+        .catch((err) => {
+            console.log(err);
+            res.status(500).json({ error: "An error occurred while fetching data" });
+        });
+}
+
+
+// ----------------------------------------- retrieve artist data ----------------------------------------------- 
+app.post("/getArtistData", (req, res) => {
+    dbinstance.collection("beatx_playlists_data").findOne({ "playlist.playlist_name": req.body.playlistName }, { "playlist.$": 1 })
+        .then((data) => {
+            const reqData = data.playlist.find(playlist => playlist.playlist_name === req.body.playlistName);
+            dbinstance.collection("songs_data").find({ playlist: req.body.playlistName }).toArray()
+                .then((result) => {
+                    res.status(200).json({ songs: result, playlistData: reqData });
+                })
+                .catch((err) => {
+                    console.log(err);
+                    res.status(500).json({ error: "Internal Server Error" });
+                })
+        })
+        .catch((err) => {
+            console.log(err);
+            res.status(500).json({ error: "Internal Server Error" });
+        })
+})
+
+// --------------------------------------- Handling songs like/unlike ---------------------------
+app.post("/addLikeSong", verifyToken, (req, res) => {
+    const songId = new ObjectId(req.body.songId);
+    const userId = req.userId; // Access user ID from request object
+
+    dbinstance.collection("user_data").updateOne(
+        { _id: userId },
+        { $addToSet: { likedSongs: songId } },
+    )
+        .then(() => {
+            res.status(200).json({ success: true });
+        })
+        .catch(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+        });
+});
+
+
 
 
 app.listen(3001, (err) => {

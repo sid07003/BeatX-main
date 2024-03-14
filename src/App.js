@@ -12,11 +12,12 @@ export const context_music = createContext();
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [albums, setAlbums] = useState([]);
+  const [likedSongs, setLikedSongs] = useState([]);
 
   return (
     <div className="App">
       <BrowserRouter>
-        <context_music.Provider value={{ isAuthenticated, setIsAuthenticated, albums, setAlbums }}>
+        <context_music.Provider value={{ isAuthenticated, setIsAuthenticated, albums, setAlbums, likedSongs, setLikedSongs }}>
           <Routes>
             <Route path="/" element={<WithSidebar><Home /></WithSidebar>} />
             <Route path="/Login" element={<Login />} />
