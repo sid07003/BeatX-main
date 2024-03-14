@@ -5,7 +5,8 @@ import { context_music } from "../App";
 
 export default function Home() {
     const Navigate = useNavigate();
-    const { isAuthenticated, setIsAuthenticated, albums, setAlbums, setLikedSongs } = useContext(context_music);
+    const { isAuthenticated, setIsAuthenticated, albums, setAlbums, setLikedSongs, set_currently_playing_music,
+    musicPlayer, setmusicPlayer } = useContext(context_music);
     const [artistPlaylists, setArtistPlaylists] = useState([]);
     const [specialSongs, setSpecalSongs] = useState([]);
 
@@ -26,6 +27,15 @@ export default function Home() {
                 setSpecalSongs(result.specialSongs);
                 setIsAuthenticated(result.isAuthenticated);
                 setLikedSongs(result.likedSongs)
+                set_currently_playing_music(result.lastPlayedMusic)
+                if(Object.keys(result.lastPlayedMusic).length > 0){
+                    console.log("true")
+                    setmusicPlayer(true);
+                }
+                else{
+                    console.log("false")
+                    setmusicPlayer(false);
+                }
             })
             .catch((err) => {
                 console.log(err);
@@ -69,7 +79,15 @@ export default function Home() {
     }
 
     return (
-        <div id="home">
+        <div id="home"
+        style={
+            musicPlayer
+              ?
+              { height: "calc(100vh  - 70px)" }
+              :
+              { height: "100vh" }
+          }
+        >
             <nav>
                 <div>
                     {/* <Link to="/SearchSongs">

@@ -66,7 +66,7 @@ app.post("/login", async (req, res) => {
                 return res.status(400).json({ error: "Invalid credentials" });
             }
 
-            const accessToken = jwt.sign({ id: result._id, email: result.email }, process.env.JWT_SECRET, { expiresIn: 24*60*60*1000 });
+            const accessToken = jwt.sign({ id: result._id, email: result.email }, process.env.JWT_SECRET, { expiresIn: 24 * 60 * 60 * 1000 });
 
             res.cookie("access_token", accessToken, {
                 maxAge: 24 * 60 * 60 * 1000,
@@ -141,7 +141,7 @@ app.get("/getBeatxData", (req, res) => {
     }
 });
 
-function fetchBeatxData(isAuthenticated, res, userData = {}) {
+function fetchBeatxData(isAuthenticated, res, userData = {}, lastPlayedMusic={}) {
     dbinstance.collection("beatx_playlists_data").find().toArray()
         .then((data) => {
             const artistPlaylists = data[0].playlist;
@@ -154,7 +154,8 @@ function fetchBeatxData(isAuthenticated, res, userData = {}) {
                         albums: albums,
                         specialSongs: specialSongs,
                         isAuthenticated: isAuthenticated,
-                        likedSongs: isAuthenticated ? userData.likedSongs || {} : {}
+                        likedSongs: isAuthenticated ? userData.likedSongs || [] : [],
+                        lastPlayedMusic: isAuthenticated ? userData.lastPlayedMusic || {} : {},
                     });
                 })
                 .catch((err) => {
@@ -192,7 +193,7 @@ app.post("/getArtistData", (req, res) => {
 // --------------------------------------- Handling songs like/unlike ---------------------------
 app.post("/addLikeSong", verifyToken, (req, res) => {
     const songId = new ObjectId(req.body.songId);
-    const userId = req.userId; // Access user ID from request object
+    const userId = req.userId;
 
     dbinstance.collection("user_data").updateOne(
         { _id: userId },
@@ -205,6 +206,25 @@ app.post("/addLikeSong", verifyToken, (req, res) => {
             res.status(500).json({ error: "Internal Server Error" });
         });
 });
+
+// -------------------------------------- set currently palying music -------------------------------
+app.post("/setCurrentlyPlayingMusic", verifyToken, (req, res) => {
+    const song = req.body.song;
+    const userId = new ObjectId(req.userId);
+
+    dbinstance.collection("user_data").updateOne(
+        { _id: userId },
+        { $set: { lastPlayedMusic: song } }
+    )
+        .then(result => {
+            res.status(200).json({ success: true, message: "Currently playing music set successfully" });
+        })
+        .catch(error => {
+            console.error("Error setting currently playing music:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+        });
+});
+
 
 
 

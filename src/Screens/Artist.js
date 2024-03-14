@@ -7,7 +7,8 @@ export default function Artist(props) {
     const { artistData } = useParams();
     const [songsData, setSongsData] = useState([]);
     const [playlistData, setPlaylistData] = useState({});
-    const { isAuthenticated, likedSongs, setLikedSongs } = useContext(context_music);
+    const { isAuthenticated, likedSongs, setLikedSongs, set_currently_playing_music, musicPlayer,
+    setIsMusicClicked } = useContext(context_music);
 
     useEffect(() => {
         fetch("http://localhost:3001/getArtistData", {
@@ -49,15 +50,35 @@ export default function Artist(props) {
             })
     }
 
+    const set_current_music = (element) => {
+        fetch("http://localhost:3001/setCurrentlyPlayingMusic", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "song": element }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                set_currently_playing_music(element);
+                setIsMusicClicked(true);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
     return (
         <div id="Artist"
-        //  style={
-        //   musicPlayer
-        //     ?
-        //     { height: "calc(100vh  - 70px)" }
-        //     :
-        //     { height: "100vh" }
-        // }
+         style={
+          musicPlayer
+            ?
+            { height: "calc(100vh  - 70px)" }
+            :
+            { height: "100vh" }
+        }
         >
             <div id="info">
                 <div id="container">
@@ -93,7 +114,7 @@ export default function Artist(props) {
                             <div
                                 id="songs"
                             >
-                                <div id="blank">
+                                <div id="blank" onClick={()=>{set_current_music(element)}}>
                                     <img
                                         src={element.song_imagepath}
                                         alt={element.song_name}
@@ -107,13 +128,14 @@ export default function Artist(props) {
 
                                 <div
                                     id="body_name"
+                                    onClick={()=>{set_current_music(element)}}
                                 >
                                     <div>
                                         {element.song_name}
                                     </div>
                                 </div>
 
-                                <div id="body_duration">{element.song_duration}</div>
+                                <div id="body_duration" onClick={()=>{set_current_music(element)}}>{element.song_duration}</div>
                                 <div id="title_likes">
                                     {
                                         likedSongs.includes(element._id)
