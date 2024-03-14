@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { context_music } from "../App.js";
 import "../SCSS/MusicPlayer.scss";
 
-export default function MusicPlayer(props) {
+export default function MusicPlayer() {
     const { likedSongs, setLikedSongs, currently_playing_music, set_currently_playing_music, musicPlayer,
-        isMusicPlaying, setIsMusicPlaying, isMusicClicked, setIsMusicClicked} = useContext(context_music);
+        isMusicPlaying, setIsMusicPlaying, isMusicClicked, setIsMusicClicked } = useContext(context_music);
 
     const [currentTime, setCurrentTime] = useState(0);
     const [volume, setVolume] = useState(50); // Initial volume set to 50
@@ -71,12 +71,12 @@ export default function MusicPlayer(props) {
         };
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         setIsMusicClicked(false);
         if (isMusicClicked) {
             playMusic();
         }
-    },[isMusicClicked])
+    }, [isMusicClicked])
 
     const convert_current_time = (currentTime) => {
         const minutes = Math.floor(currentTime / 60);
@@ -93,6 +93,63 @@ export default function MusicPlayer(props) {
         const volumeLevel = parseFloat(e.target.value) / 100;
         setVolume(e.target.value);
         music.volume = volumeLevel;
+    }
+
+    const set_current_music = (element) => {
+        fetch("http://localhost:3001/setCurrentlyPlayingMusic", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "song": element }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                console.log("current song updated");
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
+    const nextSong = (song) => {
+        fetch("http://localhost:3001/nextSong", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "song": song })
+        })
+            .then(res => res.json())
+            .then((result) => {
+                set_currently_playing_music(result.nextSong);
+                set_current_music(result.nextSong);
+                setIsMusicClicked(true);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
+    const prevSong = (song) => {
+        fetch("http://localhost:3001/prevSong", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "song": song })
+        })
+            .then(res => res.json())
+            .then((result) => {
+                set_currently_playing_music(result.prevSong);
+                set_current_music(result.prevSong);
+                setIsMusicClicked(true);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
     }
 
     return (
@@ -143,7 +200,7 @@ export default function MusicPlayer(props) {
             <div id="current_time">{convert_current_time(currentTime)}</div>
             <div id="middle_part">
                 <div id="music_controllers">
-                    <div>
+                    <div  onClick={() => { prevSong(currently_playing_music) }}>
                         <i
                             className="fa-solid fa-backward"
                             style={{ color: "#ffffff", cursor: "pointer" }}
@@ -164,13 +221,13 @@ export default function MusicPlayer(props) {
                                 ></i>
                         }
                     </div>
-                    <div>
+                    <div onClick={() => { nextSong(currently_playing_music) }}>
                         <i className="fa-solid fa-forward" style={{ color: "#ffffff", cursor: "pointer" }}></i>
                     </div>
                 </div>
 
                 <div id="music_progress" style={{ width: "70%", backgroundColor: "gray", height: "5px", cursor: "pointer" }} onClick={handleSeeking}>
-                    <div style={{ width: `${(currentTime / parseDurationToSeconds(currently_playing_music.song_duration)) * 100}%`, height: "100%", backgroundColor: "blue", borderRadius:"10px" }}></div>
+                    <div style={{ width: `${(currentTime / parseDurationToSeconds(currently_playing_music.song_duration)) * 100}%`, height: "100%", backgroundColor: "blue", borderRadius: "10px" }}></div>
                 </div>
             </div>
             <div id="duration">{currently_playing_music.song_duration}</div>
