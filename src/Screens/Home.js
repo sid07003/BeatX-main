@@ -11,8 +11,7 @@ export default function Home() {
 
     const [artistPlaylists, setArtistPlaylists] = useState([]);
 
-
-    useEffect(() => {
+    const getData = () => {
         fetch("http://localhost:3001/getBeatxData", {
             "method": "GET",
             "headers": {
@@ -42,6 +41,10 @@ export default function Home() {
             .catch((err) => {
                 console.log(err);
             })
+    }
+
+    useEffect(() => {
+        getData();
     }, [])
 
 
@@ -76,7 +79,7 @@ export default function Home() {
         })
             .then((res) => res.json())
             .then((data) => {
-                Navigate("/login");
+                getData();
             })
     }
 
@@ -123,7 +126,7 @@ export default function Home() {
 
             <nav>
                 <div>
-                    <div to="/SearchSongs">
+                    <Link to={"/search"}>
                         <input
                             type="text"
                             className="searchbar"
@@ -137,12 +140,12 @@ export default function Home() {
                                 searchbar.style.border = "2px solid white";
                             }}
                         />
-                    </div>
+                    </Link>
                 </div>
                 {
                     isAuthenticated
                         ?
-                        <div className="profile" style={{cursor:"pointer"}}>
+                        <div className="profile" style={{ cursor: "pointer" }}>
                             <i
                                 className="fa-solid fa-right-from-bracket"
                                 style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}

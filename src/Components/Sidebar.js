@@ -36,15 +36,29 @@ export default function Sidebar() {
                 </div>
                 <div className="homeText">Home</div>
             </Link>
-            <div className="search" >
-                <div style={{ margin: "10px" }}>
-                    <i
-                        className="fa-solid fa-magnifying-glass"
-                        style={{ color: "#ffffff" }}
-                    ></i>
-                </div>
-                <div style={{ margin: "5px", color: "white" }}>Search</div>
-            </div>
+            {
+                isAuthenticated
+                    ?
+                    <Link to={"/search"} className="search" >
+                        <div style={{ margin: "10px" }}>
+                            <i
+                                className="fa-solid fa-magnifying-glass"
+                                style={{ color: "#ffffff" }}
+                            ></i>
+                        </div>
+                        <div style={{ margin: "5px", color: "white" }}>Search</div>
+                    </Link>
+                    :
+                    <div className="search" onClick={() => { setNotification(true) }}>
+                        <div style={{ margin: "10px" }}>
+                            <i
+                                className="fa-solid fa-magnifying-glass"
+                                style={{ color: "#ffffff" }}
+                            ></i>
+                        </div>
+                        <div style={{ margin: "5px", color: "white" }}>Search</div>
+                    </div>
+            }
             <div className="library">
                 <div className="heading">
                     <div style={{ margin: "5px" }}>
@@ -98,14 +112,14 @@ export default function Sidebar() {
                         </ul>
                         :
                         <ul className="content">
-                            <li className="liked" onClick={()=>{setNotification(true)}}>
+                            <li className="liked" onClick={() => { setNotification(true) }}>
                                 <div style={{ margin: "5px" }} >
                                     <i className="fa-solid fa-heart" style={{ color: "#ffffff" }}></i>
                                 </div>
                                 <div style={{ margin: "5px" }} >Liked Songs</div>
                             </li>
                             {/* --------------------------------------------------------------------------------------- */}
-                            <li className="liked" onClick={()=>{setNotification(true)}}>
+                            <li className="liked" onClick={() => { setNotification(true) }}>
                                 <div style={{ margin: "5px" }} >
                                     <i className="fa-solid fa-bars" style={{ color: "#ffffff" }}></i>
                                 </div>
@@ -120,7 +134,7 @@ export default function Sidebar() {
                                 </div>
                             </li>
                             {albums.map((item, index) => (
-                                <li className="liked" key={index} onClick={()=>{setNotification(true)}}>
+                                <li className="liked" key={index} onClick={() => { setNotification(true) }}>
                                     <div
                                         style={{
                                             margin: "5px",

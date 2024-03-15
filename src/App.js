@@ -8,6 +8,7 @@ import Signup from './Screens/Signup';
 import Artist from './Screens/Artist';
 import MusicPlayer from './Components/MusicPlayer';
 import LikedSongs from './Screens/LikedSongs';
+import Search from './Screens/Search';
 
 export const context_music = createContext();
 
@@ -37,6 +38,7 @@ function App() {
             <Route path="/Signup" element={<Signup />} />
             <Route path="/artist/:artistData" element={<WithSidebar currently_playing_music={currently_playing_music}><Artist /></WithSidebar>} />
             <Route path="/likedsongs" element={<WithSidebar currently_playing_music={currently_playing_music}><LikedSongs /></WithSidebar>} />
+            <Route path="/search" element={<WithSidebar currently_playing_music={currently_playing_music}><Search /></WithSidebar>} />
           </Routes>
         </context_music.Provider>
       </BrowserRouter>

@@ -336,6 +336,40 @@ app.get("/getAlbumData", (req, res) => {
         })
 })
 
+// ------------------------------------- retrieve searched songs ----------------------------------
+app.post("/SearchedSongs",verifyToken,(req,res)=>{
+    const userId=new ObjectId(req.userId);
+
+    dbinstance.collection("user_data").findOne({_id:userId})
+    .then((result)=>{
+        res.status(200).json({searchedSongs:result.recentlySearchedSongs});
+    })
+    .catch((err)=>{
+        console.log(err);
+        res.status(500).json({error:"Internal Server Error"});
+    })
+})
+
+app.post("/setCurrentlyPlayingMusic_and_recentlysearched", verifyToken, (req, res) => {
+    const song = req.body.song;
+    const userId = new ObjectId(req.userId);
+
+    dbinstance.collection("user_data").updateOne(
+        { _id: userId },
+        { 
+            $set: { lastPlayedMusic: song },
+            $push: { recentlySearchedSongs: song._id }
+        }
+    )
+        .then(result => {
+            res.status(200).json({ success: true, message: "Currently playing music set successfully" });
+        })
+        .catch(error => {
+            console.error("Error setting currently playing music:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+        });
+})
+
 
 
 // --------------------------------------------------------------------------------------------------
