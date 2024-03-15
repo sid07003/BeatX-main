@@ -1,10 +1,27 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import "../SCSS/Sidebar.scss";
 import { context_music } from "../App";
 import { Link } from "react-router-dom";
 
 export default function Sidebar() {
-    const { isAuthenticated, albums } = useContext(context_music);
+    const { isAuthenticated, setNotification } = useContext(context_music);
+    const [albums, setAlbums] = useState([]);
+
+    useEffect(() => {
+        fetch("http://localhost:3001/getAlbumData", {
+            "method": "GET",
+            "headers": {
+                "content-type": "application/json"
+            }
+        })
+            .then(res => res.json())
+            .then((result) => {
+                setAlbums(result.albums);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    })
     return (
         <div className="sidebar">
             <div className="logo">
@@ -36,47 +53,89 @@ export default function Sidebar() {
                     <div style={{ margin: "10px" }}>Library</div>
                 </div>
                 {/* --------------------------------------------------------------------------------------- */}
-                <ul className="content">
-                    <div style={{ textDecoration: "none" }}>
-                        <li className="liked">
-                            <div style={{ margin: "5px" }} >
-                                <i className="fa-solid fa-heart" style={{ color: "#ffffff" }}></i>
-                            </div>
-                            <div style={{ margin: "5px" }} >Liked Songs</div>
-                        </li>
-                    </div>
-                    {/* --------------------------------------------------------------------------------------- */}
-                    <li className="liked">
-                        <div style={{ margin: "5px" }} >
-                            <i className="fa-solid fa-bars" style={{ color: "#ffffff" }}></i>
-                        </div>
-                        <div
-                            style={{
-                                margin: "5px",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                            }}
-                        >
-                            My Playlists
-                        </div>
-                    </li>
-                    {albums.map((item, index) => (
-                        <li className="liked" key={index}>
-                            <Link to={`/artist/${item.playlist_name}`} 
-                                style={{
-                                    margin: "5px",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    color: "rgb(255, 255, 255, 0.7)",
-                                    textDecoration:"none"
-                                }}
-                            >
-                                {item.playlist_name}
+                {
+                    isAuthenticated
+                        ?
+                        <ul className="content">
+                            <Link to={"/likedsongs"} style={{ textDecoration: "none" }}>
+                                <li className="liked">
+                                    <div style={{ margin: "5px" }} >
+                                        <i className="fa-solid fa-heart" style={{ color: "#ffffff" }}></i>
+                                    </div>
+                                    <div style={{ margin: "5px" }} >Liked Songs</div>
+                                </li>
                             </Link>
-                        </li>
-                    ))}
-
-                </ul>
+                            {/* --------------------------------------------------------------------------------------- */}
+                            <li className="liked">
+                                <div style={{ margin: "5px" }} >
+                                    <i className="fa-solid fa-bars" style={{ color: "#ffffff" }}></i>
+                                </div>
+                                <div
+                                    style={{
+                                        margin: "5px",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    My Playlists
+                                </div>
+                            </li>
+                            {albums.map((item, index) => (
+                                <li className="liked" key={index}>
+                                    <Link to={`/artist/${item.playlist_name}`}
+                                        style={{
+                                            margin: "5px",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            color: "rgb(255, 255, 255, 0.7)",
+                                            textDecoration: "none"
+                                        }}
+                                    >
+                                        {item.playlist_name}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                        :
+                        <ul className="content">
+                            <li className="liked" onClick={()=>{setNotification(true)}}>
+                                <div style={{ margin: "5px" }} >
+                                    <i className="fa-solid fa-heart" style={{ color: "#ffffff" }}></i>
+                                </div>
+                                <div style={{ margin: "5px" }} >Liked Songs</div>
+                            </li>
+                            {/* --------------------------------------------------------------------------------------- */}
+                            <li className="liked" onClick={()=>{setNotification(true)}}>
+                                <div style={{ margin: "5px" }} >
+                                    <i className="fa-solid fa-bars" style={{ color: "#ffffff" }}></i>
+                                </div>
+                                <div
+                                    style={{
+                                        margin: "5px",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    My Playlists
+                                </div>
+                            </li>
+                            {albums.map((item, index) => (
+                                <li className="liked" key={index} onClick={()=>{setNotification(true)}}>
+                                    <div
+                                        style={{
+                                            margin: "5px",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            color: "rgb(255, 255, 255, 0.7)",
+                                            textDecoration: "none"
+                                        }}
+                                    >
+                                        {item.playlist_name}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                }
             </div>
         </div>
     );

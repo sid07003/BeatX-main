@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState,useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../SCSS/Login.scss';
+import { context_music } from "../App.js";
 
 export default function Login() {
     const navigate = useNavigate();
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isNotification, setIsNotification] = useState(false);

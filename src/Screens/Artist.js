@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "../SCSS/Artist.scss";
 import { context_music } from "../App.js";
 
@@ -8,7 +8,7 @@ export default function Artist() {
     const [songsData, setSongsData] = useState([]);
     const [playlistData, setPlaylistData] = useState({});
     const { isAuthenticated, likedSongs, setLikedSongs, set_currently_playing_music, musicPlayer,
-    setIsMusicClicked, setmusicPlayer } = useContext(context_music);
+        setIsMusicClicked, setmusicPlayer, notification, setNotification } = useContext(context_music);
 
     useEffect(() => {
         fetch("http://localhost:3001/getArtistData", {
@@ -28,7 +28,7 @@ export default function Artist() {
             .catch((err) => {
                 console.log(err);
             })
-    }, [])
+    }, [artistData])
 
     const toggleLike = (songId) => {
         fetch("http://localhost:3001/addLikeSong", {
@@ -71,16 +71,47 @@ export default function Artist() {
             })
     }
 
+    const removeLike = (songId) => {
+        fetch("http://localhost:3001/removeLikeSong", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "songId": songId }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                console.log("Successfully added to liked Songs")
+                const updatedLikedSongs = likedSongs.filter(id => id !== songId);
+                setLikedSongs([...updatedLikedSongs]);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
     return (
         <div id="Artist"
-         style={
-          musicPlayer
-            ?
-            { height: "calc(100vh  - 70px)" }
-            :
-            { height: "100vh" }
-        }
+            style={
+                musicPlayer
+                    ?
+                    { height: "calc(100vh  - 70px)" }
+                    :
+                    { height: "100vh" }
+            }
         >
+            {console.log(notification)}
+            <div id="not_logged_in" style={notification? {visibility:"visible"}:{visibility:"hidden"}}>
+                <div id="not_logged_in_box"style={{position:"relative"}}>
+                    <div id="close_button" onClick={()=>{setNotification(false)}}>X</div>
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <Link to={"/login"} id="login_signup_btn" onclick="openLoginSignup()">Login/Signup</Link>
+                    </div>
+                </div>
+            </div>
+
             <div id="info">
                 <div id="container">
                     <img src={playlistData.playlist_image} alt={playlistData.playlist_name} id="singer" />
@@ -112,45 +143,77 @@ export default function Artist() {
                 <div id="body" style={{ width: "95%" }}>
                     {songsData.map((element, index) => {
                         return (
-                            <div
-                                id="songs"
-                            >
-                                <div id="blank" onClick={()=>{set_current_music(element)}}>
-                                    <img
-                                        src={element.song_imagepath}
-                                        alt={element.song_name}
-                                        style={{
-                                            height: "50px",
-                                            width: "50px",
-                                            borderRadius: "5px",
-                                        }}
-                                    ></img>
-                                </div>
-
+                            isAuthenticated
+                                ?
                                 <div
-                                    id="body_name"
-                                    onClick={()=>{set_current_music(element)}}
+                                    id="songs"
                                 >
-                                    <div>
-                                        {element.song_name}
+                                    <div id="blank" onClick={() => { set_current_music(element) }}>
+                                        <img
+                                            src={element.song_imagepath}
+                                            alt={element.song_name}
+                                            style={{
+                                                height: "50px",
+                                                width: "50px",
+                                                borderRadius: "5px",
+                                            }}
+                                        ></img>
+                                    </div>
+
+                                    <div
+                                        id="body_name"
+                                        onClick={() => { set_current_music(element) }}
+                                    >
+                                        <div>
+                                            {element.song_name}
+                                        </div>
+                                    </div>
+
+                                    <div id="body_duration" onClick={() => { set_current_music(element) }}>{element.song_duration}</div>
+                                    <div id="title_likes">
+                                        {
+                                            likedSongs.includes(element._id)
+                                                ?
+                                                <i className="fa-solid fa-heart" style={{ color: "#ffffff" }} onClick={() => {
+                                                    removeLike(element._id);
+                                                }}></i>
+                                                :
+                                                <i className="fa-regular fa-heart" style={{ color: "#ffffff" }} onClick={() => {
+                                                    toggleLike(element._id);
+                                                }}></i>
+                                        }
                                     </div>
                                 </div>
+                                :
+                                <div
+                                    id="songs"
+                                >
+                                    <div id="blank" onClick={() => { setNotification(true) }}>
+                                        <img
+                                            src={element.song_imagepath}
+                                            alt={element.song_name}
+                                            style={{
+                                                height: "50px",
+                                                width: "50px",
+                                                borderRadius: "5px",
+                                            }}
+                                        ></img>
+                                    </div>
 
-                                <div id="body_duration" onClick={()=>{set_current_music(element)}}>{element.song_duration}</div>
-                                <div id="title_likes">
-                                    {
-                                        likedSongs.includes(element._id)
-                                            ?
-                                            <i className="fa-solid fa-heart" style={{ color: "#ffffff" }} onClick={() => {
-                                                toggleLike(element._id);
-                                            }}></i>
-                                            :
-                                            <i className="fa-regular fa-heart" style={{ color: "#ffffff" }} onClick={() => {
-                                                toggleLike(element._id);
-                                            }}></i>
-                                    }
+                                    <div
+                                        id="body_name"
+                                        onClick={() => { setNotification(true) }}
+                                    >
+                                        <div>
+                                            {element.song_name}
+                                        </div>
+                                    </div>
+
+                                    <div id="body_duration" onClick={() => { setNotification(true) }}>{element.song_duration}</div>
+                                    <div id="title_likes">
+                                        <i className="fa-regular fa-heart" style={{ color: "#ffffff" }}></i>
+                                    </div>
                                 </div>
-                            </div>
                         );
                     })}
                 </div>

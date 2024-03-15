@@ -6,9 +6,10 @@ import { context_music } from "../App";
 export default function Home() {
     const Navigate = useNavigate();
     const { isAuthenticated, setIsAuthenticated, albums, setAlbums, setLikedSongs, set_currently_playing_music,
-    musicPlayer, setmusicPlayer } = useContext(context_music);
+        musicPlayer, setmusicPlayer, allSongs, setAllSongs, notification, setNotification, setIsMusicClicked
+    } = useContext(context_music);
+
     const [artistPlaylists, setArtistPlaylists] = useState([]);
-    const [specialSongs, setSpecalSongs] = useState([]);
 
 
     useEffect(() => {
@@ -24,15 +25,16 @@ export default function Home() {
             .then((result) => {
                 setArtistPlaylists(result.artistPlaylists);
                 setAlbums(result.albums);
-                setSpecalSongs(result.specialSongs);
+                setAllSongs(result.allSongs);
                 setIsAuthenticated(result.isAuthenticated);
                 setLikedSongs(result.likedSongs)
                 set_currently_playing_music(result.lastPlayedMusic)
-                if(Object.keys(result.lastPlayedMusic).length > 0){
+                setNotification(false);
+                if (Object.keys(result.lastPlayedMusic).length > 0) {
                     console.log("true")
                     setmusicPlayer(true);
                 }
-                else{
+                else {
                     console.log("false")
                     setmusicPlayer(false);
                 }
@@ -78,34 +80,49 @@ export default function Home() {
             })
     }
 
+    const set_current_music = (element) => {
+        fetch("http://localhost:3001/setCurrentlyPlayingMusic", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "song": element }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                set_currently_playing_music(element);
+                setIsMusicClicked(true);
+                setmusicPlayer(true);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
     return (
         <div id="home"
-        style={
-            musicPlayer
-              ?
-              { height: "calc(100vh  - 70px)" }
-              :
-              { height: "100vh" }
-          }
+            style={
+                musicPlayer
+                    ?
+                    { height: "calc(100vh  - 70px)" }
+                    :
+                    { height: "100vh" }
+            }
         >
+
+            <div id="not_logged_in" style={notification ? { visibility: "visible" } : { visibility: "hidden" }}>
+                <div id="not_logged_in_box" style={{ position: "relative" }}>
+                    <div id="close_button" onClick={() => { setNotification(false) }}>X</div>
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <Link to={"/login"} id="login_signup_btn" onclick="openLoginSignup()">Login/Signup</Link>
+                    </div>
+                </div>
+            </div>
+
             <nav>
                 <div>
-                    {/* <Link to="/SearchSongs">
-          <input
-            type="text"
-            className="searchbar"
-            placeholder="Search"
-            onMouseEnter={() => {
-              let searchbar = document.querySelector(".searchbar");
-              searchbar.style.border = "2px solid rgb(56, 221, 78)";
-            }}
-            onMouseLeave={() => {
-              let searchbar = document.querySelector(".searchbar");
-              searchbar.style.border = "2px solid white";
-            }}
-          />
-          </Link> */}
-
                     <div to="/SearchSongs">
                         <input
                             type="text"
@@ -125,7 +142,7 @@ export default function Home() {
                 {
                     isAuthenticated
                         ?
-                        <div className="profile">
+                        <div className="profile" style={{cursor:"pointer"}}>
                             <i
                                 className="fa-solid fa-right-from-bracket"
                                 style={{ color: "#ffffff", fontSize: "25px", padding: "10px" }}
@@ -181,24 +198,44 @@ export default function Home() {
                             style={{ color: "#ffffff", fontSize: "35px" }}
                         ></i>
                     </div>
-                    <div id="trendingSongs">
-                        {specialSongs.map((element, index) => {
-                            return (
-                                // <Link to={`/artist/:${element.Id}`} style={{textDecoration:"none"}}>
-                                //   <div style={{ cursor: "pointer" }}>
-                                //     <img src={element.playlist_image} alt={element.playlist_name} id="artist" />
-                                //     <p style={{ paddingTop: "5px" }}>{element.playlist_name}</p>
-                                //   </div>
-                                // </Link>
-                                <div style={{ textDecoration: "none" }} key={index}>
-                                    <div style={{ cursor: "pointer" }}>
-                                        <img src={element.song_imagepath} alt={element.song_name} id="trending" />
-                                        <p style={{ paddingTop: "5px" }}>{element.song_name}</p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+
+                    {
+                        isAuthenticated
+                            ?
+                            <div id="trendingSongs">
+                                {allSongs.map((element, index) => {
+                                    return (
+                                        element.playlist.includes("Special")
+                                            ?
+                                            <div style={{ textDecoration: "none" }} key={index} onClick={() => { set_current_music(element) }}>
+                                                <div style={{ cursor: "pointer" }}>
+                                                    <img src={element.song_imagepath} alt={element.song_name} id="trending" />
+                                                    <p style={{ paddingTop: "5px" }}>{element.song_name}</p>
+                                                </div>
+                                            </div>
+                                            :
+                                            <></>
+                                    );
+                                })}
+                            </div>
+                            :
+                            <div id="trendingSongs">
+                                {allSongs.map((element, index) => {
+                                    return (
+                                        element.playlist.includes("Special")
+                                            ?
+                                            <div style={{ textDecoration: "none" }} key={index} onClick={() => { setNotification(true) }}>
+                                                <div style={{ cursor: "pointer" }}>
+                                                    <img src={element.song_imagepath} alt={element.song_name} id="trending" />
+                                                    <p style={{ paddingTop: "5px" }}>{element.song_name}</p>
+                                                </div>
+                                            </div>
+                                            :
+                                            <></>
+                                    );
+                                })}
+                            </div>
+                    }
 
                     <div id="rightscroll" onClick={rightSrl2}>
                         <i

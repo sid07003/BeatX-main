@@ -147,12 +147,12 @@ function fetchBeatxData(isAuthenticated, res, userData = {}, lastPlayedMusic = {
             const artistPlaylists = data[0].playlist;
             const albums = data[1].playlist;
 
-            dbinstance.collection("songs_data").find({ playlist: "Special" }).toArray()
+            dbinstance.collection("songs_data").find().toArray()
                 .then((specialSongs) => {
                     res.status(200).json({
                         artistPlaylists: artistPlaylists,
                         albums: albums,
-                        specialSongs: specialSongs,
+                        allSongs: specialSongs,
                         isAuthenticated: isAuthenticated,
                         likedSongs: isAuthenticated ? userData.likedSongs || [] : [],
                         lastPlayedMusic: isAuthenticated ? userData.lastPlayedMusic || {} : {},
@@ -206,6 +206,22 @@ app.post("/addLikeSong", verifyToken, (req, res) => {
             res.status(500).json({ error: "Internal Server Error" });
         });
 });
+
+app.post("/removeLikeSong",verifyToken, (req, res) => {
+    const songId = new ObjectId(req.body.songId);
+    const userId = req.userId;
+
+    dbinstance.collection("user_data").updateOne(
+        { _id: userId },
+        { $pull: { likedSongs: songId } },
+    )
+        .then(() => {
+            res.status(200).json({ success: true });
+        })
+        .catch(() => {
+            res.status(500).json({ error: "Internal Server Error" });
+        });
+})
 
 // -------------------------------------- set currently palying music -------------------------------
 app.post("/setCurrentlyPlayingMusic", verifyToken, (req, res) => {
@@ -280,6 +296,47 @@ app.post("/prevSong", (req, res) => {
             res.status(500).json({ error: "Internal Server Error" });
         })
 })
+
+// --------------------------------------- Retrieving Liked Songs -----------------------------------
+
+app.post("/getLikedSongs", verifyToken, (req, res) => {
+    const userId = new ObjectId(req.userId);
+
+    dbinstance.collection("user_data").findOne({ _id: userId })
+        .then((result) => {
+            const likedSongs = result.likedSongs;
+            console.log(likedSongs)
+
+            dbinstance.collection("songs_data").find({ _id: { $in: likedSongs } })
+                .toArray()
+                .then((songs) => {
+                    res.json({ likedSongs: songs });
+                })
+                .catch((err) => {
+                    console.error("Error finding songs:", err);
+                    res.status(500).json({ error: "Internal server error" });
+                });
+        })
+        .catch((err) => {
+            console.error("Error finding user data:", err);
+            res.status(500).json({ error: "Internal server error" });
+        });
+});
+
+// ---------------------------------------- get albums data --------------------------------------
+
+app.get("/getAlbumData", (req, res) => {
+    dbinstance.collection("beatx_playlists_data").find().toArray()
+        .then((data) => {
+            const albums = data[1].playlist;
+            res.status(200).json({ albums: albums })
+        })
+        .catch((err) => {
+            res.status(500).json({ error: "Internal server error" })
+        })
+})
+
+
 
 // --------------------------------------------------------------------------------------------------
 

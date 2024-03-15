@@ -152,6 +152,27 @@ export default function MusicPlayer() {
             })
     }
 
+    const removeLike = (songId) => {
+        fetch("http://localhost:3001/removeLikeSong", {
+            "method": "POST",
+            "headers": {
+                "content-type": "application/json"
+            },
+            "body": JSON.stringify({ "songId": songId }),
+            withCredentials: true,
+            credentials: 'include'
+        })
+            .then(res => res.json())
+            .then((result) => {
+                console.log("Successfully added to liked Songs")
+                const updatedLikedSongs = likedSongs.filter(id => id !== songId);
+                setLikedSongs([...updatedLikedSongs]);
+            })
+            .catch((err) => {
+                console.log(err);
+            })
+    }
+
     return (
         <div
             id="music_player"
@@ -188,7 +209,7 @@ export default function MusicPlayer() {
                         likedSongs.includes(currently_playing_music._id)
                             ?
                             <i className="fa-solid fa-heart" style={{ color: "#ffffff" }} onClick={() => {
-                                toggleLike(currently_playing_music._id);
+                                removeLike(currently_playing_music._id);
                             }}></i>
                             :
                             <i className="fa-regular fa-heart" style={{ color: "#ffffff" }} onClick={() => {

@@ -7,6 +7,7 @@ import Login from './Screens/Login';
 import Signup from './Screens/Signup';
 import Artist from './Screens/Artist';
 import MusicPlayer from './Components/MusicPlayer';
+import LikedSongs from './Screens/LikedSongs';
 
 export const context_music = createContext();
 
@@ -18,6 +19,8 @@ function App() {
   const [musicPlayer, setmusicPlayer] = useState(false);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [isMusicClicked, setIsMusicClicked] = useState(false);
+  const [allSongs, setAllSongs] = useState([]);
+  const [notification, setNotification] = useState(false);
 
   return (
     <div className="App">
@@ -25,13 +28,15 @@ function App() {
         <context_music.Provider value={{
           isAuthenticated, setIsAuthenticated, albums, setAlbums, likedSongs, setLikedSongs,
           currently_playing_music, set_currently_playing_music, musicPlayer, setmusicPlayer,
-          isMusicPlaying, setIsMusicPlaying, isMusicClicked, setIsMusicClicked
+          isMusicPlaying, setIsMusicPlaying, isMusicClicked, setIsMusicClicked, allSongs, setAllSongs,
+          notification, setNotification
         }}>
           <Routes>
             <Route path="/" element={<WithSidebar currently_playing_music={currently_playing_music}><Home /></WithSidebar>} />
             <Route path="/Login" element={<Login />} />
             <Route path="/Signup" element={<Signup />} />
             <Route path="/artist/:artistData" element={<WithSidebar currently_playing_music={currently_playing_music}><Artist /></WithSidebar>} />
+            <Route path="/likedsongs" element={<WithSidebar currently_playing_music={currently_playing_music}><LikedSongs /></WithSidebar>} />
           </Routes>
         </context_music.Provider>
       </BrowserRouter>
